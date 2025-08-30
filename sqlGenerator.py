@@ -4,8 +4,8 @@ from enums import *
 
 class SqlGenerator():
     def __init__(self):
-        self.con=sqlite3.connect('database.db')
-        self.cur=self.con.cursor()
+        self.connection=sqlite3.connect('database.db')
+        self.con=self.connection.cursor()
 
     def executeQuery(self,type:typeOfQuery,data:str):
 
@@ -14,10 +14,10 @@ class SqlGenerator():
         match type:
             case typeOfQuery.CREATE:
                 qry=self.tableCreateQuery(json_dict)
-                self.cur.execute(qry)
+                self.con.execute(qry)
                 print("success")
             case typeOfQuery.INSERT:
-                self.tableInsertQuery()
+                self.tableInsertQuery(json_dict)
             case typeOfQuery.READ:
                 self.tableSelectQuery()
             case typeOfQuery.DELETE:
@@ -35,6 +35,17 @@ class SqlGenerator():
         return qry
     
     def tableInsertQuery(self,dta:dict):
+        columns=",".join([i for i in dta["fields"]])
+        placeholders=", ".join(["?" for i in range(len(dta["fields"]))])
+        values=tuple(dta["values"])
+    
+
+        safe_query=f'INSERT INTO {dta["name"]} ({columns}) VALUES ({placeholders})'
+
+        self.con.execute(safe_query,values)
+        self.connection.commit()
+
+        
         pass
 
     def tableDeleteQuery(self,dta:dict):
