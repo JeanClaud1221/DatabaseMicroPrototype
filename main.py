@@ -1,4 +1,4 @@
 from sqlGenerator import SqlGenerator
+from enums import *
 sl=SqlGenerator()
-res=sl.generate_query("{\"name\":\"test\",\"fields\":{\"id\":\"int\",\"name\":\"text not null\"}}")
-print(res)
+res=sl.executeQuery(typeOfQuery.CREATE,"{\"name\":\"test\",\"fields\":{\"id\":\"int\",\"name\":\"text not null\"}}")
