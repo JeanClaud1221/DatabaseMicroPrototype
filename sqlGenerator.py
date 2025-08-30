@@ -7,17 +7,22 @@ class SqlGenerator():
         self.con=sqlite3.connect('database.db')
         self.cur=self.con.cursor()
 
-    def executeQuery(self,type:typeOfQuery,data:str)->str:
+    def executeQuery(self,type:typeOfQuery,data:str):
 
         json_dict=json.loads(data)
-        
+
         match type:
             case typeOfQuery.CREATE:
                 qry=self.tableCreateQuery(json_dict)
                 self.cur.execute(qry)
                 print("success")
-
-        return self.tableCreateQuery(json_dict)
+            case typeOfQuery.INSERT:
+                self.tableInsertQuery()
+            case typeOfQuery.READ:
+                self.tableSelectQuery()
+            case typeOfQuery.DELETE:
+                self.tableDeleteQuery()
+                
 
     def tableCreateQuery(self,dta:dict)->str:
         qry=""
@@ -28,3 +33,12 @@ class SqlGenerator():
                 qry+=","
         qry+=");"
         return qry
+    
+    def tableInsertQuery(self,dta:dict):
+        pass
+
+    def tableDeleteQuery(self,dta:dict):
+        pass
+    def tableSelectQuery(self,dta:dict):
+        pass
+
