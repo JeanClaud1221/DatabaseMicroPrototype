@@ -9,19 +9,18 @@ class SqlGenerator():
 
     def executeQuery(self,type:typeOfQuery,data:str):
 
-        json_dict=json.loads(data)
+        # json_dict=json.loads(data)
 
         match type:
             case typeOfQuery.CREATE:
                 qry=self.tableCreateQuery(json_dict)
                 self.con.execute(qry)
-                print("success")
             case typeOfQuery.INSERT:
                 self.tableInsertQuery(json_dict)
             case typeOfQuery.READ:
-                self.tableSelectQuery()
+                return self.tableSelectQuery(data)
             case typeOfQuery.DELETE:
-                self.tableDeleteQuery()
+                self.tableDeleteQuery(json_dict)
                 
 
     def tableCreateQuery(self,dta:dict)->str:
@@ -31,7 +30,7 @@ class SqlGenerator():
             qry+=f'{val} {dta["fields"][val]}'
             if i<len(dta["fields"])-1:
                 qry+=","
-        qry+=");"
+        qry+=") STRICT;"
         return qry
     
     def tableInsertQuery(self,dta:dict):
@@ -42,14 +41,37 @@ class SqlGenerator():
 
         safe_query=f'INSERT INTO {dta["name"]} ({columns}) VALUES ({placeholders})'
 
-        self.con.execute(safe_query,values)
+        self.connection.execute(safe_query,values)
+
         self.connection.commit()
 
         
-        pass
 
     def tableDeleteQuery(self,dta:dict):
+
         pass
-    def tableSelectQuery(self,dta:dict):
+    def tableSelectQuery(self,dta):
+        return self.createFilter(dta["operator"],dta["conditions"])
         pass
+
+    def createFilter(self,operator,condition):
+        tmp="("
+        
+        # print(condition)
+        for i,operation in enumerate(condition):
+
+            if operation["operator"]=="AND" or operation["operator"]=="OR":
+                tmp+=self.createFilter(condition[i]["operator"],condition[i]["conditions"])
+            else:
+            # print("----------------")
+            # print(operation)
+            # print("----------------")
+                tmp+=f" {operation['field']}"
+                tmp+=f"{operation['operator']}"
+                tmp+=f"{operation['value']}"
+            if i<len(condition)-1:
+                tmp+=f' {operator} '
+            # return sql
+        # print(sql)
+        return tmp+")"
 
