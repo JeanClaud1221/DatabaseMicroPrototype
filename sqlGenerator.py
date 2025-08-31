@@ -49,34 +49,58 @@ class SqlGenerator():
         
 
     def tableDeleteQuery(self,dta:dict):
+        name=dta["name"]
+        
 
         pass
 # This also only executes the queries ,it doesn't return the resulting data
     def tableSelectQuery(self,dta):
         name =dta["name"]
         cols=",".join(k for k in dta["columns"])
-        conditions=self.createFilterConditions(dta["filters"]["operator"],dta["filters"]["conditions"])
+        conditions=self.createFilter(dta["filters"])
 
         safe_query=f"SELECT {cols} FROM {name} WHERE {conditions}"
-
         self.con.execute(safe_query)
         print(self.con.fetchall())
 
-    def createFilterConditions(self,operator,condition):
+    def createFilter(self,filter:dict):
+        if "conditions" in filter.keys():
+            return self.createFilterWithConditions(filter["operator"],filter["conditions"])
+        else:
+            return self.createFilterWithSingleCondition(filter)
+
+
+    def createConditional(self,field,operator,value):
+        tmp=""
+        tmp+=f"{field}"
+        tmp+=f" {operator} "
+        if isinstance(value,str):
+            tmp+=f"\"{value}\""
+        else:
+            tmp+=f"{value}"
+        return tmp
+    
+    def createFilterWithConditions(self,operator,condition):
         tmp="("
         for i,operation in enumerate(condition):
-
             if operation["operator"]=="AND" or operation["operator"]=="OR":
-                tmp+=self.createFilterConditions(condition[i]["operator"],condition[i]["conditions"])
+                tmp+=self.createFilterWithConditions(condition[i]["operator"],condition[i]["conditions"])
             else:
+                tmp+=self.createConditional(operation["field"],operation["operator"],operation["value"])
 
-                tmp+=f"{operation['field']}"
-                tmp+=f" {operation['operator']} "
-                if isinstance(operation['value'],str):
-                    tmp+=f"\"{operation['value']}\""
-                else:
-                    tmp+=f"{operation['value']}"
+
             if i<len(condition)-1:
                 tmp+=f' {operator} '
         return tmp+")"
+    
+    def createFilterWithSingleCondition(self,condition):
+        field=condition["field"]
+        operator=condition["operator"]
+        value=condition["value"]
 
+        tmp="("
+        tmp+=self.createConditional(field,operator,value)
+        tmp+=")"
+        return tmp
+
+    
