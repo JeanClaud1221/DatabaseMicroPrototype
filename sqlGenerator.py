@@ -7,9 +7,10 @@ class SqlGenerator():
         self.connection=sqlite3.connect('database.db')
         self.con=self.connection.cursor()
 
+# TODO this only executes the queries and doesnt return anything have update return success or failure and read queries return the actuall data
     def executeQuery(self,type:typeOfQuery,data:str):
 
-        # json_dict=json.loads(data)
+        json_dict=json.loads(data)
 
         match type:
             case typeOfQuery.CREATE:
@@ -18,7 +19,7 @@ class SqlGenerator():
             case typeOfQuery.INSERT:
                 self.tableInsertQuery(json_dict)
             case typeOfQuery.READ:
-                return self.tableSelectQuery(data)
+                self.tableSelectQuery(json_dict)
             case typeOfQuery.DELETE:
                 self.tableDeleteQuery(json_dict)
                 
@@ -50,28 +51,32 @@ class SqlGenerator():
     def tableDeleteQuery(self,dta:dict):
 
         pass
+# This also only executes the queries ,it doesn't return the resulting data
     def tableSelectQuery(self,dta):
-        return self.createFilter(dta["operator"],dta["conditions"])
-        pass
+        name =dta["name"]
+        cols=",".join(k for k in dta["columns"])
+        conditions=self.createFilterConditions(dta["filters"]["operator"],dta["filters"]["conditions"])
 
-    def createFilter(self,operator,condition):
+        safe_query=f"SELECT {cols} FROM {name} WHERE {conditions}"
+
+        self.con.execute(safe_query)
+        print(self.con.fetchall())
+
+    def createFilterConditions(self,operator,condition):
         tmp="("
-        
-        # print(condition)
         for i,operation in enumerate(condition):
 
             if operation["operator"]=="AND" or operation["operator"]=="OR":
-                tmp+=self.createFilter(condition[i]["operator"],condition[i]["conditions"])
+                tmp+=self.createFilterConditions(condition[i]["operator"],condition[i]["conditions"])
             else:
-            # print("----------------")
-            # print(operation)
-            # print("----------------")
-                tmp+=f" {operation['field']}"
-                tmp+=f"{operation['operator']}"
-                tmp+=f"{operation['value']}"
+
+                tmp+=f"{operation['field']}"
+                tmp+=f" {operation['operator']} "
+                if isinstance(operation['value'],str):
+                    tmp+=f"\"{operation['value']}\""
+                else:
+                    tmp+=f"{operation['value']}"
             if i<len(condition)-1:
                 tmp+=f' {operator} '
-            # return sql
-        # print(sql)
         return tmp+")"
 
