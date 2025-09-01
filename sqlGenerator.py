@@ -50,9 +50,11 @@ class SqlGenerator():
 
     def tableDeleteQuery(self,dta:dict):
         name=dta["name"]
+        conditions=dta["filters"]
+        query_conditions=self.createFilter(conditions)
+        safe_query=f"DELETE FROM {name} WHERE {query_conditions}"
+        print(safe_query)
         
-
-        pass
 # This also only executes the queries ,it doesn't return the resulting data
     def tableSelectQuery(self,dta):
         name =dta["name"]
@@ -60,8 +62,7 @@ class SqlGenerator():
         conditions=self.createFilter(dta["filters"])
 
         safe_query=f"SELECT {cols} FROM {name} WHERE {conditions}"
-        self.con.execute(safe_query)
-        print(self.con.fetchall())
+        print(safe_query)
 
     def createFilter(self,filter:dict):
         if "conditions" in filter.keys():
